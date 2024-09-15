@@ -1,5 +1,5 @@
-name: 'AI-based PR Reviewer & Summarizer with Chat Capabilities'
-description: 'AI-based PR Reviewer & Summarizer with Chat Capabilities'
+name: 'AI-based PR Reviewer With Support For Major LLM Providers'
+description: 'AI-based PR Reviewer & Summarizer with Chat Capabilities adapted from coderabbit ai-pr-reviewer'
 branding:
   icon: 'git-merge'
   color: 'orange'

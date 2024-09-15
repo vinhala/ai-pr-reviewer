@@ -131,7 +131,7 @@ export const handleReviewComment = async (
       // get tokens so far
       let tokens = getTokenCount(prompts.renderComment(inputs))
 
-      if (tokens > options.heavyTokenLimits.requestTokens) {
+      if (tokens > options.maxInputTokens) {
         await commenter.reviewCommentReply(
           pullNumber,
           topLevelComment,
@@ -147,7 +147,7 @@ export const handleReviewComment = async (
         if (
           fileDiffCount > 0 &&
           tokens + fileDiffTokens * fileDiffCount <=
-            options.heavyTokenLimits.requestTokens
+            options.maxInputTokens
         ) {
           tokens += fileDiffTokens * fileDiffCount
           inputs.fileDiff = fileDiff
@@ -165,7 +165,7 @@ export const handleReviewComment = async (
         const shortSummaryTokens = getTokenCount(shortSummary)
         if (
           tokens + shortSummaryTokens <=
-          options.heavyTokenLimits.requestTokens
+          options.maxInputTokens
         ) {
           tokens += shortSummaryTokens
           inputs.shortSummary = shortSummary

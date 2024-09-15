@@ -5,11 +5,46 @@ import {
   setFailed,
   warning
 } from '@actions/core'
-import {Bot} from './bot'
-import {OpenAIOptions, Options} from './options'
+import {Bot, BotOptions} from './bot'
+import {ModelProvider, Options} from './options'
 import {Prompts} from './prompts'
 import {codeReview} from './review'
 import {handleReviewComment} from './review-comment'
+
+function deriveBotOptions(options: Options, mode: "summary" | "review"): BotOptions {
+  switch (options.modelProvider) {
+    case 'azure': {
+      return {
+        modelProvider: 'azure',
+        azureOpenaiEndpoint: options.azureOpenaiEndpoint,
+        azureOpenaiApiKey: options.azureOpenaiApiKey,
+        azureOpenaiDeploymentName: options.azureOpenaiDeploymentName,
+        debug: options.debug,
+        language: options.language,
+        systemMessage: options.systemMessage,
+        timeoutMs: options.timeoutMS,
+        retries: options.retries,
+        responseTokens: mode === "summary" ? options.summaryTokens : options.reviewTokens
+      }
+    }
+    case 'openai': {
+      return {
+        modelProvider: 'openai',
+        openaiModel: options.openaiModel,
+        openaiTemperature: options.openaiModelTemperature,
+        openaiApiKey: options.azureOpenaiApiKey,
+        responseTokens: mode === "summary" ? options.summaryTokens : options.reviewTokens,
+        debug: options.debug,
+        language: options.language,
+        systemMessage: options.systemMessage,
+        timeoutMs: options.timeoutMS,
+        retries: options.retries
+      }
+    }
+    default:
+      throw new Error(`Unknown model provider: ${options.modelProvider}`)
+  }
+}
 
 async function run(): Promise<void> {
   const options: Options = new Options(
@@ -21,14 +56,19 @@ async function run(): Promise<void> {
     getBooleanInput('review_comment_lgtm'),
     getMultilineInput('path_filters'),
     getInput('system_message'),
-    getInput('openai_light_model'),
-    getInput('openai_heavy_model'),
+    getInput('model_provider') as ModelProvider,
+    getInput('openai_model'),
     getInput('openai_model_temperature'),
-    getInput('openai_retries'),
-    getInput('openai_timeout_ms'),
+    getInput('retries'),
+    getInput('timeout_ms'),
     getInput('openai_concurrency_limit'),
+    getInput('azure_openai_api_key'),
+    getInput('azure_openai_endpoint'),
+    getInput('azure_openai_deployment_name'),
     getInput('github_concurrency_limit'),
-    getInput('openai_base_url'),
+    getInput('summary_tokens'),
+    getInput('review_tokens'),
+    getInput('max_input_tokens'),
     getInput('language')
   )
 
@@ -44,10 +84,7 @@ async function run(): Promise<void> {
 
   let lightBot: Bot | null = null
   try {
-    lightBot = new Bot(
-      options,
-      new OpenAIOptions(options.openaiLightModel, options.lightTokenLimits)
-    )
+    lightBot = new Bot(deriveBotOptions(options, "summary"))
   } catch (e: any) {
     warning(
       `Skipped: failed to create summary bot, please check your openai_api_key: ${e}, backtrace: ${e.stack}`
@@ -57,10 +94,7 @@ async function run(): Promise<void> {
 
   let heavyBot: Bot | null = null
   try {
-    heavyBot = new Bot(
-      options,
-      new OpenAIOptions(options.openaiHeavyModel, options.heavyTokenLimits)
-    )
+    heavyBot = new Bot(deriveBotOptions(options, "review"))
   } catch (e: any) {
     warning(
       `Skipped: failed to create review bot, please check your openai_api_key: ${e}, backtrace: ${e.stack}`

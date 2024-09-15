@@ -329,7 +329,7 @@ ${
     )
     const tokens = getTokenCount(summarizePrompt)
 
-    if (tokens > options.lightTokenLimits.requestTokens) {
+    if (tokens > options.maxInputTokens) {
       info(`summarize: diff tokens exceeds limit, skip ${filename}`)
       summariesFailed.push(`${filename} (diff tokens exceeds limit)`)
       return null
@@ -539,9 +539,9 @@ ${
       let patchesToPack = 0
       for (const [, , patch] of patches) {
         const patchTokens = getTokenCount(patch)
-        if (tokens + patchTokens > options.heavyTokenLimits.requestTokens) {
+        if (tokens + patchTokens > options.maxInputTokens) {
           info(
-            `only packing ${patchesToPack} / ${patches.length} patches, tokens: ${tokens} / ${options.heavyTokenLimits.requestTokens}`
+            `only packing ${patchesToPack} / ${patches.length} patches, tokens: ${tokens} / ${options.maxInputTokens}`
           )
           break
         }
@@ -592,7 +592,7 @@ ${
         const commentChainTokens = getTokenCount(commentChain)
         if (
           tokens + commentChainTokens >
-          options.heavyTokenLimits.requestTokens
+          options.maxInputTokens
         ) {
           commentChain = ''
         } else {
